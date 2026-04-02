@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLV Producteurs Locaux</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C8A84B;
+    --gold-light: #F5E9C6;
+    --dark: #1A1A1A;
+    --surface: #FAFAF7;
+    --card: #FFFFFF;
+    --border: rgba(0,0,0,0.1);
+    --text: #1A1A1A;
+    --muted: #6B6B6B;
+    --radius: 12px;
+    --shadow: 0 2px 20px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  header {
+    background: var(--dark);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  header .logo-mark {
+    width: 36px; height: 36px;
+    background: var(--gold);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 18px; color: #fff;
+  }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: #fff;
+    letter-spacing: 0.01em;
+  }
+  header span {
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    margin-left: 4px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    min-height: calc(100vh - 60px);
+  }
+
+  .sidebar {
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    padding: 28px 24px;
+    overflow-y: auto;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .section-label:first-child { margin-top: 0; border-top: none; padding-top: 0; }
+
+  .field { margin-bottom: 14px; }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+  input, select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus { border-color: var(--gold); }
+  select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B6B6B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+  .format-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .format-btn {
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 10px 6px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .format-btn:hover { border-color: var(--gold); }
+  .format-btn.active { border-color: var(--gold); background: var(--gold-light); }
+  .format-btn .fmt-name { font-weight: 600; font-size: 14px; }
+  .format-btn .fmt-dim { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .generate-btn {
+    width: 100%;
+    margin-top: 24px;
+    padding: 14px;
+    background: var(--dark);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: background 0.15s, transform 0.1s;
+    position: relative;
+    overflow: hidden;
+  }
+  .generate-btn:hover { background: #333; }
+  .generate-btn:active { transform: scale(0.99); }
+  .generate-btn:disabled { background: #aaa; cursor: not-allowed; }
+
+  .status-bar {
+    margin-top: 16px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+  .status-bar.info { display: flex; background: #EEF6FF; color: #1A5FA0; border: 1px solid #B5D4F4; }
+  .status-bar.error { display: flex; background: #FFF0F0; color: #991F1F; border: 1px solid #F5BFBF; }
+  .status-bar.success { display: flex; background: #F0FFF4; color: #166534; border: 1px solid #BBF7D0; }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(26,95,160,0.3);
+    border-top-color: #1A5FA0;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .preview-panel {
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background: #EFEFEB;
+    gap: 20px;
+  }
+  .preview-panel h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    color: var(--muted);
+    font-weight: 400;
+    align-self: flex-start;
+  }
+
+  .plv-wrapper {
+    position: relative;
+    background: #fff;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+    overflow: hidden;
+  }
+
+  .plv-canvas {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+  }
+
+  .plv-photo {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    background: #ddd;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .plv-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .plv-photo-placeholder {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; color: #999; font-size: 13px; height: 100%;
+  }
+
+  .plv-bottom {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: #fff;
+    display: flex;
+    align-items: stretch;
+  }
+  .plv-logo-zone {
+    display: flex; align-items: center; justify-content: center;
+    background: #f5f5f5;
+    border-right: 1px solid #e0e0e0;
+    flex-shrink: 0;
+  }
+  .plv-logo-inner {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 3px; text-align: center;
+  }
+  .plv-region-badge {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .plv-region-badge img { width: 100%; height: 100%; object-fit: cover; }
+  .plv-logo-text {
+    font-size: 7px; color: #555; line-height: 1.3; font-weight: 500;
+  }
+  .plv-brand {
+    font-family: 'Playfair Display', serif;
+    color: #C8A84B;
+    font-size: 9px; font-weight: 700;
+    font-style: italic;
+    line-height: 1;
+  }
+  .plv-divider { width: 1px; background: #ddd; flex-shrink: 0; }
+  .plv-text-zone {
+    padding: 10px 12px;
+    display: flex; flex-direction: column; justify-content: center;
+    flex: 1;
+    min-width: 0;
+  }
+  .plv-supplier-name {
+    font-weight: 700;
+    color: #111;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .plv-description {
+    color: #444;
+    line-height: 1.4;
+    font-style: italic;
+  }
+
+  .plv-stamp {
+    position: absolute;
+    right: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stamp-svg { width: 100%; height: 100%; }
+
+  .download-btn {
+    padding: 11px 24px;
+    background: var(--gold);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: none;
+  }
+  .download-btn:hover { background: #b8943f; }
+  .download-btn.visible { display: block; }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    gap: 12px;
+    color: #999;
+  }
+  .empty-icon {
+    width: 64px; height: 64px;
+    border: 2px dashed #ccc;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+  }
+  .empty-state p { font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">P</div>
+  <h1>PLV Producteurs Locaux <span>— Générateur</span></h1>
+</header>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="section-label">Fournisseur</div>
+    <div class="field">
+      <label>Nom du fournisseur</label>
+      <input id="supplierName" type="text" placeholder="ex. Aromaury" />
+    </div>
+    <div class="field">
+      <label>Adresse du fournisseur</label>
+      <input id="supplierAddress" type="text" placeholder="ex. 1 rue de la Paix, 54700 Saizerais" />
+    </div>
+
+    <div class="section-label">Magasin</div>
+    <div class="field">
+      <label>Nom du magasin</label>
+      <input id="storeName" type="text" placeholder="ex. Ma Région Nancy" />
+    </div>
+    <div class="field">
+      <label>Adresse du magasin</label>
+      <input id="storeAddress" type="text" placeholder="ex. 4 rue Saint-Dizier, 54000 Nancy" />
+    </div>
+
+    <div class="section-label">Région</div>
+    <div class="field">
+      <select id="region">
+        <option value="">— Sélectionner une région —</option>
+        <option value="Alsace">Alsace</option>
+        <option value="Lorraine">Lorraine</option>
+        <option value="Île de France">Île-de-France</option>
+        <option value="PACA">PACA</option>
+      </select>
+    </div>
+
+    <div class="section-label">Format</div>
+    <div class="format-grid">
+      <div class="format-btn" onclick="selectFormat('13x13')" id="fmt-13x13">
+        <div class="fmt-name">13×13</div>
+        <div class="fmt-dim">carré</div>
+      </div>
+      <div class="format-btn" onclick="selectFormat('A4')" id="fmt-A4">
+        <div class="fmt-name">A4</div>
+        <div class="fmt-dim">21×29,7cm</div>
+      </div>
+      <div class="format-btn" onclick="selectFormat('A3')" id="fmt-A3">
+        <div class="fmt-name">A3</div>
+        <div class="fmt-dim">29,7×42cm</div>
+      </div>
+    </div>
+
+    <button class="generate-btn" id="generateBtn" onclick="generate()">Générer la PLV</button>
+
+    <div class="status-bar" id="statusBar">
+      <div class="spinner" id="statusSpinner"></div>
+      <span id="statusText"></span>
+    </div>
+  </div>
+
+  <div class="preview-panel" id="previewPanel">
+    <h2>Aperçu</h2>
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🖼</div>
+      <p>Remplissez le formulaire et cliquez sur Générer</p>
+    </div>
+    <div id="plvContainer" style="display:none; width:100%; display:flex; flex-direction:column; align-items:center; gap:16px;"></div>
+    <button class="download-btn" id="downloadBtn" onclick="downloadPLV()">⬇ Télécharger (PNG)</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+let selectedFormat = '13x13';
+let generatedData = null;
+
+const REGION_COLORS = {
+  'Alsace': '#E63946',
+  'Lorraine': '#F4A261',
+  'Île de France': '#457B9D',
+  'PACA': '#2A9D8F'
+};
+
+const REGION_SVG = {
+  'Alsace': `<svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><circle cx="22" cy="22" r="22" fill="#E63946"/><text x="22" y="27" text-anchor="middle" font-size="11" fill="white" font-family="sans-serif" font-weight="bold">ALS</text></svg>`,
+  'Lorraine': `<svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><circle cx="22" cy="22" r="22" fill="#F4A261"/><text x="22" y="27" text-anchor="middle" font-size="11" fill="white" font-family="sans-serif" font-weight="bold">LOR</text></svg>`,
+  'Île de France': `<svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><circle cx="22" cy="22" r="22" fill="#457B9D"/><text x="22" y="27" text-anchor="middle" font-size="9" fill="white" font-family="sans-serif" font-weight="bold">IdF</text></svg>`,
+  'PACA': `<svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><circle cx="22" cy="22" r="22" fill="#2A9D8F"/><text x="22" y="27" text-anchor="middle" font-size="10" fill="white" font-family="sans-serif" font-weight="bold">PACA</text></svg>`
+};
+
+function selectFormat(fmt) {
+  selectedFormat = fmt;
+  document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('fmt-' + fmt).classList.add('active');
+}
+selectFormat('13x13');
+
+function setStatus(msg, type) {
+  const bar = document.getElementById('statusBar');
+  const spinner = document.getElementById('statusSpinner');
+  bar.className = 'status-bar ' + type;
+  document.getElementById('statusText').textContent = msg;
+  spinner.style.display = type === 'info' ? 'block' : 'none';
+}
+
+async function geocode(address) {
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
+  const res = await fetch(url, { headers: { 'Accept-Language': 'fr' } });
+  const data = await res.json();
+  if (!data.length) throw new Error(`Adresse introuvable: ${address}`);
+  return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+}
+
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+async function fetchDescriptionAndPhoto(supplierName, supplierAddress) {
+  const prompt = `Tu es un expert en circuits courts et produits locaux. Le fournisseur s'appelle "${supplierName}" et se trouve à "${supplierAddress}".
+Fais une courte recherche et rédige une description commerciale attrayante de ce fournisseur en 2-3 phrases maximum (60 mots max), en français, pour une PLV en magasin. Mets en avant ses produits phares, son territoire, et son engagement. Ne commence pas par le nom du fournisseur.
+Réponds UNIQUEMENT au format JSON strict (pas de markdown, pas de backticks), comme ceci:
+{"description":"...","photoQuery":"..."}
+Le champ photoQuery doit être une requête Google Images courte en français pour trouver une belle photo représentative de ce fournisseur ou de ses produits.`;
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      tools: [{ type: "web_search_20250305", name: "web_search" }],
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  const data = await response.json();
+  const fullText = data.content.filter(b => b.type === "text").map(b => b.text).join("");
+  const clean = fullText.replace(/```json|```/g, "").trim();
+  const jsonMatch = clean.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("Réponse API invalide");
+  return JSON.parse(jsonMatch[0]);
+}
+
+async function generate() {
+  const supplierName = document.getElementById('supplierName').value.trim();
+  const supplierAddress = document.getElementById('supplierAddress').value.trim();
+  const storeName = document.getElementById('storeName').value.trim();
+  const storeAddress = document.getElementById('storeAddress').value.trim();
+  const region = document.getElementById('region').value;
+
+  if (!supplierName || !supplierAddress || !storeName || !storeAddress || !region) {
+    setStatus('Veuillez remplir tous les champs.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('downloadBtn').classList.remove('visible');
+
+  try {
+    setStatus('Géolocalisation des adresses…', 'info');
+    const [supplierCoords, storeCoords] = await Promise.all([
+      geocode(supplierAddress),
+      geocode(storeAddress)
+    ]);
+    const distanceKm = haversineKm(supplierCoords.lat, supplierCoords.lon, storeCoords.lat, storeCoords.lon);
+
+    setStatus('Recherche d\'informations sur le fournisseur…', 'info');
+    const { description, photoQuery } = await fetchDescriptionAndPhoto(supplierName, supplierAddress);
+
+    generatedData = { supplierName, storeName, region, distanceKm, description, photoQuery };
+    renderPLV(generatedData);
+
+    setStatus(`PLV générée — distance calculée : ${distanceKm} km`, 'success');
+    document.getElementById('downloadBtn').classList.add('visible');
+  } catch(e) {
+    setStatus('Erreur : ' + e.message, 'error');
+    console.error(e);
+  }
+  btn.disabled = false;
+}
+
+function getFormatDimensions() {
+  const scale = 3.78;
+  const formats = {
+    '13x13': { w: 490, h: 490, photoH: 300, bottomH: 190 },
+    'A4':    { w: 595, h: 842, photoH: 540, bottomH: 302 },
+    'A3':    { w: 842, h: 1191, photoH: 780, bottomH: 411 }
+  };
+  return formats[selectedFormat];
+}
+
+function renderPLV(data) {
+  const container = document.getElementById('plvContainer');
+  container.innerHTML = '';
+  container.style.display = 'flex';
+
+  const dim = getFormatDimensions();
+  const maxW = Math.min(dim.w, 600);
+  const scale = maxW / dim.w;
+  const dispW = Math.round(dim.w * scale);
+  const dispH = Math.round(dim.h * scale);
+  const photoH = Math.round(dim.photoH * scale);
+  const bottomH = Math.round(dim.bottomH * scale);
+  const logoZoneW = Math.round(bottomH * 0.55);
+  const stampSize = Math.round(bottomH * 0.72);
+  const stampTop = Math.round(photoH - stampSize * 0.45);
+
+  const nameSize = Math.max(13, Math.round(bottomH * 0.1));
+  const descSize = Math.max(11, Math.round(bottomH * 0.072));
+  const logoTextSize = Math.max(7, Math.round(logoZoneW * 0.09));
+  const brandSize = Math.max(8, Math.round(logoZoneW * 0.11));
+  const badgeSize = Math.round(logoZoneW * 0.52);
+  const stampFontSize = Math.max(18, Math.round(stampSize * 0.22));
+  const stampSubSize = Math.max(9, Math.round(stampSize * 0.1));
+
+  const regionColor = REGION_COLORS[data.region] || '#888';
+  const regionSvg = REGION_SVG[data.region] || '';
+
+  const stampSvg = `
+  <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" width="${stampSize}" height="${stampSize}">
+    <circle cx="60" cy="60" r="56" fill="#111" stroke="#333" stroke-width="1"/>
+    <circle cx="60" cy="60" r="50" fill="none" stroke="#555" stroke-width="0.8" stroke-dasharray="3 2"/>
+    <path id="arcTop" d="M 16,60 A 44,44 0 0,1 104,60" fill="none"/>
+    <path id="arcBot" d="M 20,65 A 42,42 0 0,0 100,65" fill="none"/>
+    <text font-family="DM Sans, sans-serif" font-size="9" fill="#aaa" font-weight="500" letter-spacing="2">
+      <textPath href="#arcTop" startOffset="8%">Situé seulement à</textPath>
+    </text>
+    <text font-family="DM Sans, sans-serif" font-size="9" fill="#aaa" font-weight="500" letter-spacing="2">
+      <textPath href="#arcBot" startOffset="8%">du magasin</textPath>
+    </text>
+    <text x="60" y="56" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="28" fill="white" font-weight="700">${data.distanceKm}</text>
+    <text x="60" y="72" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" fill="#ccc" font-weight="500">Km</text>
+  </svg>`;
+
+  const plvHTML = `
+  <div class="plv-canvas" style="width:${dispW}px;height:${dispH}px;position:relative;background:#fff;overflow:hidden;font-family:'DM Sans',sans-serif;">
+    <div class="plv-photo" style="height:${photoH}px;background:#ddd;position:absolute;top:0;left:0;right:0;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+      <div id="photoContainer" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;color:#999;font-size:12px;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          <span>Photo du fournisseur</span>
+          <span style="font-size:10px;color:#bbb;">${data.photoQuery}</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="position:absolute;right:${Math.round(stampSize*0.05)}px;top:${stampTop}px;z-index:10;">
+      ${stampSvg}
+    </div>
+
+    <div class="plv-bottom" style="position:absolute;bottom:0;left:0;right:0;height:${bottomH}px;background:#fff;display:flex;align-items:stretch;">
+      <div style="width:${logoZoneW}px;flex-shrink:0;background:#f7f7f5;border-right:1px solid #e8e8e8;display:flex;align-items:center;justify-content:center;padding:8px;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;">
+          <div style="width:${badgeSize}px;height:${badgeSize}px;border-radius:50%;overflow:hidden;">
+            ${regionSvg}
+          </div>
+          <div style="font-size:${logoTextSize}px;color:#555;line-height:1.35;font-weight:500;max-width:${logoZoneW-16}px;">
+            <div>votre magasin</div>
+            <div>aime</div>
+          </div>
+          <div style="font-size:${brandSize}px;font-weight:700;color:#C8A84B;font-style:italic;font-family:'Playfair Display',serif;line-height:1;">ses partenaires<br>locaux</div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:0;padding:${Math.round(bottomH*0.06)}px ${Math.round(bottomH*0.08)}px;display:flex;flex-direction:column;justify-content:center;padding-right:${Math.round(stampSize*0.5+10)}px;">
+        <div style="font-weight:700;font-size:${nameSize}px;color:#111;line-height:1.2;margin-bottom:${Math.round(nameSize*0.4)}px;">${data.supplierName}</div>
+        <div style="font-size:${descSize}px;color:#444;line-height:1.5;font-style:italic;">${data.description}</div>
+      </div>
+    </div>
+  </div>`;
+
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = plvHTML;
+  container.appendChild(wrapper);
+}
+
+async function downloadPLV() {
+  if (!generatedData) return;
+  const el = document.querySelector('.plv-canvas');
+  if (!el) return;
+  const canvas = await html2canvas(el, { scale: 2, useCORS: true, allowTaint: true });
+  const link = document.createElement('a');
+  link.download = `PLV_${generatedData.supplierName.replace(/\s/g,'_')}_${selectedFormat}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+</script>
+</body>
+</html>
